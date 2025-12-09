@@ -10,6 +10,8 @@ export interface Env {
 }
 
 // CORS headers for all responses
+// Note: Using '*' for Allow-Origin is acceptable for this single-user app
+// For production with authentication, restrict to specific domains
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',

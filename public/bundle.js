@@ -493,10 +493,13 @@
             }
             // Parse amount (remove currency symbols, handle negatives)
             let amount = parseFloat(row[amountColumn].replace(/[$,]/g, ''));
+            // If amount is negative, it might indicate an expense in some CSV formats
+            // But we store amounts as positive and use the type field
+            const absAmount = Math.abs(amount);
             return {
                 date,
                 description: row[descColumn],
-                amount: Math.abs(amount),
+                amount: absAmount,
                 type: defaultType,
                 category_id: defaultCategory,
                 source: 'csv'
