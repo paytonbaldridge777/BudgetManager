@@ -362,7 +362,7 @@ async function saveBudgetData(): Promise<void> {
 async function loadTransactions(): Promise<void> {
   populateMonthFilter();
   
-  const monthFilter = (document.getElementById('transaction-month-filter') as HTMLSelectElement).value;
+  const monthFilter = (document.getElementById('transaction-month-filter') as unknown as HTMLSelectElement).value;
   
   try {
     const transactions = await fetchTransactions(monthFilter);
@@ -391,7 +391,7 @@ async function loadTransactions(): Promise<void> {
 }
 
 function populateMonthFilter(): void {
-  const select = document.getElementById('transaction-month-filter') as HTMLSelectElement;
+  const select = document.getElementById('transaction-month-filter') as unknown as HTMLSelectElement;
   if (select.options.length > 0) return; // Already populated
 
   // Generate last 12 months
@@ -419,7 +419,7 @@ function openTransactionModal(transaction?: Transaction): void {
   const title = document.getElementById('transaction-modal-title')!;
   
   // Populate category dropdown
-  const categorySelect = document.getElementById('transaction-category') as HTMLSelectElement;
+  const categorySelect = document.getElementById('transaction-category') as unknown as HTMLSelectElement;
   categorySelect.innerHTML = '';
   categories.forEach(cat => {
     const option = document.createElement('option');
@@ -434,8 +434,8 @@ function openTransactionModal(transaction?: Transaction): void {
     (document.getElementById('transaction-date') as HTMLInputElement).value = transaction.date;
     (document.getElementById('transaction-description') as HTMLInputElement).value = transaction.description;
     (document.getElementById('transaction-amount') as HTMLInputElement).value = transaction.amount.toString();
-    (document.getElementById('transaction-type') as HTMLSelectElement).value = transaction.type;
-    (document.getElementById('transaction-category') as HTMLSelectElement).value = transaction.category_id.toString();
+    (document.getElementById('transaction-type') as unknown as HTMLSelectElement).value = transaction.type;
+    (document.getElementById('transaction-category') as unknown as HTMLSelectElement).value = transaction.category_id.toString();
   } else {
     title.textContent = 'Add Transaction';
     form.reset();
@@ -457,8 +457,8 @@ async function handleTransactionSubmit(e: Event): Promise<void> {
     date: (document.getElementById('transaction-date') as HTMLInputElement).value,
     description: (document.getElementById('transaction-description') as HTMLInputElement).value,
     amount: parseFloat((document.getElementById('transaction-amount') as HTMLInputElement).value),
-    type: (document.getElementById('transaction-type') as HTMLSelectElement).value as 'income' | 'expense',
-    category_id: parseInt((document.getElementById('transaction-category') as HTMLSelectElement).value)
+    type: (document.getElementById('transaction-type') as unknown as HTMLSelectElement).value as 'income' | 'expense',
+    category_id: parseInt((document.getElementById('transaction-category') as unknown as HTMLSelectElement).value)
   };
 
   try {
@@ -547,7 +547,7 @@ async function handleCSVParse(): Promise<void> {
     const selects = ['csv-date-column', 'csv-description-column', 'csv-amount-column'];
     
     selects.forEach(selectId => {
-      const select = document.getElementById(selectId) as HTMLSelectElement;
+      const select = document.getElementById(selectId) as unknown as HTMLSelectElement;
       select.innerHTML = '';
       headers.forEach(header => {
         const option = document.createElement('option');
@@ -558,7 +558,7 @@ async function handleCSVParse(): Promise<void> {
     });
 
     // Populate category dropdown
-    const categorySelect = document.getElementById('csv-default-category') as HTMLSelectElement;
+    const categorySelect = document.getElementById('csv-default-category') as unknown as HTMLSelectElement;
     categorySelect.innerHTML = '';
     categories.forEach(cat => {
       const option = document.createElement('option');
@@ -597,11 +597,11 @@ function showCSVPreview(): void {
 }
 
 async function handleCSVImport(): Promise<void> {
-  const dateColumn = (document.getElementById('csv-date-column') as HTMLSelectElement).value;
-  const descColumn = (document.getElementById('csv-description-column') as HTMLSelectElement).value;
-  const amountColumn = (document.getElementById('csv-amount-column') as HTMLSelectElement).value;
-  const defaultType = (document.getElementById('csv-default-type') as HTMLSelectElement).value as 'income' | 'expense';
-  const defaultCategory = parseInt((document.getElementById('csv-default-category') as HTMLSelectElement).value);
+  const dateColumn = (document.getElementById('csv-date-column') as unknown as HTMLSelectElement).value;
+  const descColumn = (document.getElementById('csv-description-column') as unknown as HTMLSelectElement).value;
+  const amountColumn = (document.getElementById('csv-amount-column') as unknown as HTMLSelectElement).value;
+  const defaultType = (document.getElementById('csv-default-type') as unknown as HTMLSelectElement).value as 'income' | 'expense';
+  const defaultCategory = parseInt((document.getElementById('csv-default-category') as unknown as HTMLSelectElement).value);
 
   const transactions: Transaction[] = parsedCSVData.map(row => {
     // Parse date (handle various formats)

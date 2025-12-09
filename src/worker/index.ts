@@ -1,8 +1,12 @@
 // Cloudflare Worker for Budget Manager API
 // This worker handles all API routes for the budget application
 
+import { getAssetFromKV } from '@cloudflare/kv-asset-handler';
+
 export interface Env {
   BUDGET_DB: D1Database;
+  __STATIC_CONTENT: any;
+  __STATIC_CONTENT_MANIFEST: string;
 }
 
 // CORS headers for all responses
@@ -278,8 +282,8 @@ async function getSummary(env: Env, url: URL) {
       ORDER BY actual DESC
     `).bind(month, month).all();
     
-    const totalIncome = totals[0]?.total_income || 0;
-    const totalExpenses = totals[0]?.total_expenses || 0;
+    const totalIncome = Number(totals[0]?.total_income) || 0;
+    const totalExpenses = Number(totals[0]?.total_expenses) || 0;
     const net = totalIncome - totalExpenses;
     
     return jsonResponse({
@@ -296,7 +300,7 @@ async function getSummary(env: Env, url: URL) {
 
 // Main request router
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
     const method = request.method;
@@ -306,69 +310,106 @@ export default {
       return handleOptions();
     }
 
+    // API routes
+    if (path.startsWith('/api/')) {
+      try {
+        // Categories routes
+        if (path === '/api/categories') {
+          if (method === 'GET') return getCategories(env);
+          if (method === 'POST') {
+            const body = await request.json();
+            return createCategory(env, body);
+          }
+        }
+        
+        if (path.match(/^\/api\/categories\/\d+$/)) {
+          const id = path.split('/').pop()!;
+          if (method === 'PUT') {
+            const body = await request.json();
+            return updateCategory(env, id, body);
+          }
+          if (method === 'DELETE') return deleteCategory(env, id);
+        }
+
+        // Transactions routes
+        if (path === '/api/transactions') {
+          if (method === 'GET') return getTransactions(env, url);
+          if (method === 'POST') {
+            const body = await request.json();
+            return createTransaction(env, body);
+          }
+        }
+        
+        if (path === '/api/transactions/import') {
+          if (method === 'POST') {
+            const body = await request.json();
+            return importTransactions(env, body);
+          }
+        }
+        
+        if (path.match(/^\/api\/transactions\/\d+$/)) {
+          const id = path.split('/').pop()!;
+          if (method === 'PUT') {
+            const body = await request.json();
+            return updateTransaction(env, id, body);
+          }
+          if (method === 'DELETE') return deleteTransaction(env, id);
+        }
+
+        // Budgets routes
+        if (path === '/api/budgets') {
+          if (method === 'GET') return getBudgets(env, url);
+          if (method === 'POST') {
+            const body = await request.json();
+            return saveBudgets(env, body);
+          }
+        }
+
+        // Reports routes
+        if (path === '/api/reports/summary') {
+          if (method === 'GET') return getSummary(env, url);
+        }
+
+        // 404 for unmatched API routes
+        return errorResponse('Not found', 404);
+      } catch (error: any) {
+        console.error('Error:', error);
+        return errorResponse(error.message || 'Internal server error', 500);
+      }
+    }
+
+    // Serve static assets
     try {
-      // Categories routes
-      if (path === '/api/categories') {
-        if (method === 'GET') return getCategories(env);
-        if (method === 'POST') {
-          const body = await request.json();
-          return createCategory(env, body);
+      return await getAssetFromKV(
+        {
+          request,
+          waitUntil: ctx.waitUntil.bind(ctx),
+        } as any,
+        {
+          ASSET_NAMESPACE: env.__STATIC_CONTENT,
+          ASSET_MANIFEST: JSON.parse(env.__STATIC_CONTENT_MANIFEST || '{}'),
+        }
+      );
+    } catch (e) {
+      // If the asset is not found, return index.html for client-side routing
+      if (path !== '/' && !path.includes('.')) {
+        try {
+          const newRequest = new Request(new URL('/', request.url), request);
+          return await getAssetFromKV(
+            {
+              request: newRequest,
+              waitUntil: ctx.waitUntil.bind(ctx),
+            } as any,
+            {
+              ASSET_NAMESPACE: env.__STATIC_CONTENT,
+              ASSET_MANIFEST: JSON.parse(env.__STATIC_CONTENT_MANIFEST || '{}'),
+            }
+          );
+        } catch (e) {
+          return new Response('Not Found', { status: 404 });
         }
       }
-      
-      if (path.match(/^\/api\/categories\/\d+$/)) {
-        const id = path.split('/').pop()!;
-        if (method === 'PUT') {
-          const body = await request.json();
-          return updateCategory(env, id, body);
-        }
-        if (method === 'DELETE') return deleteCategory(env, id);
-      }
-
-      // Transactions routes
-      if (path === '/api/transactions') {
-        if (method === 'GET') return getTransactions(env, url);
-        if (method === 'POST') {
-          const body = await request.json();
-          return createTransaction(env, body);
-        }
-      }
-      
-      if (path === '/api/transactions/import') {
-        if (method === 'POST') {
-          const body = await request.json();
-          return importTransactions(env, body);
-        }
-      }
-      
-      if (path.match(/^\/api\/transactions\/\d+$/)) {
-        const id = path.split('/').pop()!;
-        if (method === 'PUT') {
-          const body = await request.json();
-          return updateTransaction(env, id, body);
-        }
-        if (method === 'DELETE') return deleteTransaction(env, id);
-      }
-
-      // Budgets routes
-      if (path === '/api/budgets') {
-        if (method === 'GET') return getBudgets(env, url);
-        if (method === 'POST') {
-          const body = await request.json();
-          return saveBudgets(env, body);
-        }
-      }
-
-      // Reports routes
-      if (path === '/api/reports/summary') {
-        if (method === 'GET') return getSummary(env, url);
-      }
-
-      // 404 for unmatched routes
-      return errorResponse('Not found', 404);
-    } catch (error: any) {
-      console.error('Error:', error);
-      return errorResponse(error.message || 'Internal server error', 500);
+      return new Response('Not Found', { status: 404 });
     }
   },
 };
