@@ -1,0 +1,26 @@
+{
+  "name": "budget-manager",
+  "version": "1.0.0",
+  "description": "Personal home budget web application running on Cloudflare",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute BUDGET_DB --local --file=./db/schema.sql",
+    "db:init:remote": "wrangler d1 execute BUDGET_DB --remote --file=./db/schema.sql",
+    "build": "tsc && rollup -c",
+    "build:frontend": "rollup -c"
+  },
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20231025.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.5",
+    "rollup": "^4.9.1",
+    "tslib": "^2.6.2",
+    "typescript": "^5.3.3",
+    "wrangler": "^3.22.1"
+  }
+}

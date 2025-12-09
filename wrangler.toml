@@ -1,0 +1,17 @@
+name = "budget-manager"
+main = "dist/worker/index.js"
+compatibility_date = "2024-01-01"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "BUDGET_DB"
+database_name = "budget-db"
+database_id = "placeholder-for-your-db-id"
+
+# Static assets
+[site]
+bucket = "./public"
+
+# Local development
+[dev]
+port = 8787
