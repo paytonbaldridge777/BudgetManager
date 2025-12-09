@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget Manager</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="app">
+    <nav class="navbar">
+      <div class="nav-brand">Budget Manager</div>
+      <ul class="nav-menu">
+        <li><a href="#" data-page="dashboard" class="nav-link active">Dashboard</a></li>
+        <li><a href="#" data-page="budget" class="nav-link">Budget</a></li>
+        <li><a href="#" data-page="transactions" class="nav-link">Transactions</a></li>
+        <li><a href="#" data-page="settings" class="nav-link">Settings</a></li>
+      </ul>
+    </nav>
+
+    <main class="container">
+      <!-- Dashboard Page -->
+      <div id="dashboard-page" class="page active">
+        <div class="page-header">
+          <h1>Dashboard</h1>
+          <div class="month-selector">
+            <button id="prev-month" class="btn-icon">←</button>
+            <span id="current-month"></span>
+            <button id="next-month" class="btn-icon">→</button>
+          </div>
+        </div>
+        
+        <div class="summary-cards">
+          <div class="card">
+            <div class="card-label">Total Income</div>
+            <div class="card-value income" id="total-income">$0.00</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Total Expenses</div>
+            <div class="card-value expense" id="total-expenses">$0.00</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Net</div>
+            <div class="card-value" id="net-amount">$0.00</div>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <h2>Spending by Category</h2>
+          <canvas id="category-chart"></canvas>
+        </div>
+
+        <div class="category-breakdown">
+          <h2>Category Breakdown</h2>
+          <table id="category-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Budgeted</th>
+                <th>Actual</th>
+                <th>Remaining</th>
+                <th>% of Budget</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Budget Page -->
+      <div id="budget-page" class="page">
+        <div class="page-header">
+          <h1>Monthly Budget</h1>
+          <div class="month-selector">
+            <button id="budget-prev-month" class="btn-icon">←</button>
+            <span id="budget-current-month"></span>
+            <button id="budget-next-month" class="btn-icon">→</button>
+          </div>
+        </div>
+
+        <div class="budget-table-container">
+          <table id="budget-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Budgeted</th>
+                <th>Actual</th>
+                <th>Difference</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td><strong>Total</strong></td>
+                <td id="total-budgeted">$0.00</td>
+                <td id="total-actual">$0.00</td>
+                <td id="total-difference">$0.00</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <button id="save-budget" class="btn btn-primary">Save Budget</button>
+      </div>
+
+      <!-- Transactions Page -->
+      <div id="transactions-page" class="page">
+        <div class="page-header">
+          <h1>Transactions</h1>
+          <div class="actions">
+            <button id="add-transaction-btn" class="btn btn-primary">Add Transaction</button>
+            <button id="import-csv-btn" class="btn btn-secondary">Import CSV</button>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <label>
+            Month:
+            <select id="transaction-month-filter"></select>
+          </label>
+        </div>
+
+        <div class="transactions-list">
+          <table id="transactions-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Source</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Settings Page -->
+      <div id="settings-page" class="page">
+        <div class="page-header">
+          <h1>Settings</h1>
+        </div>
+
+        <section class="settings-section">
+          <h2>Manage Categories</h2>
+          <div class="category-form">
+            <input type="text" id="new-category-name" placeholder="New category name">
+            <button id="add-category-btn" class="btn btn-primary">Add Category</button>
+          </div>
+          <ul id="categories-list"></ul>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Transaction Modal -->
+  <div id="transaction-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="transaction-modal-title">Add Transaction</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      <form id="transaction-form">
+        <input type="hidden" id="transaction-id">
+        <div class="form-group">
+          <label for="transaction-date">Date</label>
+          <input type="date" id="transaction-date" required>
+        </div>
+        <div class="form-group">
+          <label for="transaction-description">Description</label>
+          <input type="text" id="transaction-description" required>
+        </div>
+        <div class="form-group">
+          <label for="transaction-amount">Amount</label>
+          <input type="number" id="transaction-amount" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label for="transaction-type">Type</label>
+          <select id="transaction-type" required>
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="transaction-category">Category</label>
+          <select id="transaction-category" required></select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary modal-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CSV Import Modal -->
+  <div id="csv-import-modal" class="modal">
+    <div class="modal-content large">
+      <div class="modal-header">
+        <h2>Import CSV</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div id="csv-import-content">
+        <div id="csv-upload-step">
+          <div class="form-group">
+            <label for="csv-file">Select CSV File</label>
+            <input type="file" id="csv-file" accept=".csv">
+          </div>
+          <button id="csv-parse-btn" class="btn btn-primary">Parse CSV</button>
+        </div>
+        
+        <div id="csv-mapping-step" style="display: none;">
+          <h3>Map CSV Columns</h3>
+          <div class="form-group">
+            <label>Date Column:</label>
+            <select id="csv-date-column"></select>
+          </div>
+          <div class="form-group">
+            <label>Description Column:</label>
+            <select id="csv-description-column"></select>
+          </div>
+          <div class="form-group">
+            <label>Amount Column:</label>
+            <select id="csv-amount-column"></select>
+          </div>
+          <div class="form-group">
+            <label>Default Type:</label>
+            <select id="csv-default-type">
+              <option value="expense">Expense</option>
+              <option value="income">Income</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Default Category:</label>
+            <select id="csv-default-category"></select>
+          </div>
+          
+          <h3>Preview</h3>
+          <div id="csv-preview" class="csv-preview"></div>
+          
+          <div class="modal-actions">
+            <button class="btn btn-secondary modal-cancel">Cancel</button>
+            <button id="csv-import-confirm-btn" class="btn btn-primary">Import Transactions</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/bundle.js"></script>
+</body>
+</html>
